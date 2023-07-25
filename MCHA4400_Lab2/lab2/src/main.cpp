@@ -150,20 +150,15 @@ int main(int argc, char *argv[])
         {
             // TODO: Open output video for writing using the same fps as the input video
             //       and the codec set to cv::VideoWriter::fourcc('m', 'p', '4', 'v')
-            printf("Made it here ey");
             
-
             if (!cap.isOpened())
             {
                 std::cout << "Error opening the video file." << std::endl;
                 return -1;
             }
 
-
             // Create the output video writer
             writer.open(outputPath.string(), fourcc, fps, cv::Size(cap.get(cv::CAP_PROP_FRAME_WIDTH), cap.get(cv::CAP_PROP_FRAME_HEIGHT)));
-            printf("Made it here 3");
-
             // Check if the output video writer is opened successfully
             if (!writer.isOpened())
             {
@@ -195,8 +190,6 @@ int main(int argc, char *argv[])
             printf("Features requested: %d", maxNumFeatures);
             imgout = detectAndDrawHarris(frame, maxNumFeatures);
         }
-
-
         // Using Shi and Tomasi Detector
         if(detector == "shi")
         {
@@ -204,8 +197,6 @@ int main(int argc, char *argv[])
             printf("Features requested: %d", maxNumFeatures);
             imgout = detectAndDrawShiAndTomasi(frame, maxNumFeatures);
         }
-
-
         // ORB feature detector
         if(detector == "orb")
         {
@@ -214,9 +205,6 @@ int main(int argc, char *argv[])
             printf("Features requested: %d", maxNumFeatures);
             imgout = detectAndDrawORB(frame, maxNumFeatures);
         }
-
-
-
         // ARUCO feature detector
         if(detector == "aruco")
         {

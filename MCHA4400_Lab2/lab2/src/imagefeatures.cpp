@@ -25,7 +25,7 @@ cv::Mat detectAndDrawHarris(const cv::Mat & img, int maxNumFeatures)
     int blockSize = 2;
     int apertureSize = 3;
     double k = 0.04;
-    int thresh = 200;
+    int thresh = 130;
     int max_thresh = 255;
     int NumFeatures = 0;
     const char* source_window = "Source image";
@@ -59,8 +59,12 @@ cv::Mat detectAndDrawHarris(const cv::Mat & img, int maxNumFeatures)
     std::cout << "Image width:" << imgout.rows << std::endl;
     std::cout << "Features requested:" << maxNumFeatures << std::endl;
     std::cout << "Features detected:" << NumFeatures << std::endl;
+    // handle if requested features are greater than detected
+    if (maxNumFeatures > NumFeatures) {
+        std::cout << "Requested features are greater than detected, using detected features." << std::endl;
+    }
     // Print the sorted Harris corner values
-    for (int i = 0; i < maxNumFeatures && i < harrisValues.size(); i++) {
+    for (int i = 0; i < std::min(NumFeatures, maxNumFeatures) && i < harrisValues.size(); i++) {
         const auto& harrisCorner = harrisValues[i];
         cv::circle( imgout, cv::Point(harrisCorner[1],harrisCorner[0]), 5, cv::Scalar(0, 0, 255), 2, 8, 0 );
         std::cout << "idx:  " << i << " at point:  (" << harrisCorner[0] << "," << harrisCorner[1] << ")   Harris Score: " << harrisCorner[2] << std::endl;
@@ -78,10 +82,10 @@ cv::Mat detectAndDrawShiAndTomasi(const cv::Mat & img, int maxNumFeatures)
     cv::Mat imgout = img.clone();
 
     // TODO
-    //int blockSize = 2;
-    //int apertureSize = 3;
+    int blockSize = 2;
+    int apertureSize = 3;
     //double k = 0.04;
-    double thresholdValue = 0.01; // Adjust this threshold based on your image and requirements
+    double thresholdValue = 0.02; // Adjust this threshold based on your image and requirements
     //int max_thresh = 255;
     int NumFeatures = 0;
     //const char* source_window = "Source image";
@@ -91,7 +95,7 @@ cv::Mat detectAndDrawShiAndTomasi(const cv::Mat & img, int maxNumFeatures)
     cv::cvtColor( img, img_gray, cv::COLOR_BGR2GRAY );
     cv::Mat eigenValues;
     std::vector<std::array<float, 3>> responseValues; // Use std::vector instead of std::array
-    cv::cornerMinEigenVal(img_gray, eigenValues, 3);
+    cv::cornerMinEigenVal(img_gray, eigenValues, blockSize, apertureSize);
     cv::Mat corners;
     cv::threshold(eigenValues, dst_norm, thresholdValue, 255, cv::THRESH_BINARY);
 
@@ -143,19 +147,19 @@ cv::Mat detectAndDrawORB(const cv::Mat & img, int maxNumFeatures)
 
 
     cv::Mat dst_norm, dst_norm_scaled, img_gray;
-    cv::cvtColor( img, img_gray, cv::COLOR_BGR2GRAY );
+    //cv::cvtColor( img, img_gray, cv::COLOR_BGR2GRAY );
     cv::Mat eigenValues;
     std::vector<std::array<float, 3>> responseValues; // Use std::vector instead of std::array
     // Create an ORB object
     cv::Ptr<cv::ORB> orb = cv::ORB::create(maxNumFeatures);
     // Detect keypoints
     std::vector<cv::KeyPoint> keypoints;
-    orb->detect(img_gray, keypoints);
+    orb->detect(img, keypoints);
     // Compute the ORB descriptors
     cv::Mat descriptors;
-    orb->compute(img_gray, keypoints, descriptors);
+    orb->compute(img, keypoints, descriptors);
     // Draw keypoints on the image
-    cv::drawKeypoints(img_gray, keypoints,  imgout, cv::Scalar(0, 0, 255),
+    cv::drawKeypoints(img, keypoints,  imgout, cv::Scalar(0, 0, 255),
                       cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     
     // Sort the harrisValues vector using the custom comparator function
