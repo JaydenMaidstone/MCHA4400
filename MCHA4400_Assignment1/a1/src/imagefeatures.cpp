@@ -185,7 +185,7 @@ cv::Mat detectAndDrawORB(const cv::Mat & img, int maxNumFeatures)
     return imgout;
 }
 
-cv::Mat detectAndDrawArUco(const cv::Mat & img, int maxNumFeatures)
+cv::Mat detectAndDrawArUco(const cv::Mat & img, int maxNumFeatures, std::vector<std::vector<cv::Point2f>>& outCorners, std::vector<int>& outIds)
 {
     cv::Mat imgout = img.clone();
 
@@ -200,23 +200,26 @@ cv::Mat detectAndDrawArUco(const cv::Mat & img, int maxNumFeatures)
     detector.detectMarkers(img, corners, ids, rejected);
     cv::aruco::drawDetectedMarkers(imgout, corners, ids);
 
-    std::cout << "Using ShiTomasi feature detector:" << std::endl;
-    std::cout << "Image width:" << imgout.cols << std::endl;
-    std::cout << "Image width:" << imgout.rows << std::endl;
+    // std::cout << "Using ShiTomasi feature detector:" << std::endl;
+    // std::cout << "Image width:" << imgout.cols << std::endl;
+    // std::cout << "Image width:" << imgout.rows << std::endl;
 
     // Sort the IDs in ascending order
-    std::sort(ids.begin(), ids.end());
+    // std::sort(ids.begin(), ids.end());
 
-    // Print detected markers with their IDs and corner coordinates
-    for (size_t i = 0; i < ids.size(); ++i) {
-        std::cout << "ID: " << ids[i] << " with corners: ";
-        for (size_t j = 0; j < corners[i].size(); ++j) {
-            std::cout << "(" << corners[i][j].x << "," << corners[i][j].y << ")";
-            if (j < corners[i].size() - 1)
-                std::cout << " ";
-        }
-        std::cout << std::endl;
-    }
+    // // Print detected markers with their IDs and corner coordinates
+    // for (size_t i = 0; i < ids.size(); ++i) {
+    //     std::cout << "ID: " << ids[i] << " with corners: ";
+    //     for (size_t j = 0; j < corners[i].size(); ++j) {
+    //         std::cout << "(" << corners[i][j].x << "," << corners[i][j].y << ")";
+    //         if (j < corners[i].size() - 1)
+    //             std::cout << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+    outCorners = corners;
+    outIds = ids;
 
     return imgout;
 }

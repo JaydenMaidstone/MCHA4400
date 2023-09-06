@@ -165,8 +165,36 @@ void runVisualNavigationFromVideo(const std::filesystem::path & videoPath, const
         {
             break;
         }
+
+        //Aruco detection
         int maxNumFeatures = 10;
-        cv::Mat imgout = detectAndDrawArUco(imgin, maxNumFeatures);
+        std::vector<std::vector<cv::Point2f>> corners;
+        std::vector<int> ids;
+        
+        cv::Mat imgout = detectAndDrawArUco(imgin, maxNumFeatures, corners, ids);
+
+        cv::Mat cameraMatrix, distCoeffs;
+        float markerLength = 0.1;
+
+        // Set coordinate system
+        cv::Mat objPoints(4, 1, CV_32FC3);
+        objPoints.ptr<cv::Vec3f>(0)[0] = cv::Vec3f(-markerLength/2.f, markerLength/2.f, 0);
+        objPoints.ptr<cv::Vec3f>(0)[1] = cv::Vec3f(markerLength/2.f, markerLength/2.f, 0);
+        objPoints.ptr<cv::Vec3f>(0)[2] = cv::Vec3f(markerLength/2.f, -markerLength/2.f, 0);
+        objPoints.ptr<cv::Vec3f>(0)[3] = cv::Vec3f(-markerLength/2.f, -markerLength/2.f, 0);
+
+
+        int nMarkers = corners.size();
+        std::vector<cv::Vec3d> rvecs(nMarkers), tvecs(nMarkers);
+        // Calculate pose for each marker
+        for (int i = 0; i < nMarkers; i++) {
+        solvePnP(objPoints, corners.at(i), cam.cameraMatrix, cam.distCoeffs, rvecs.at(i), tvecs.at(i));
+        }
+        // Draw axis for each marker
+        for(unsigned int i = 0; i < ids.size(); i++) {
+        cv::drawFrameAxes(imgout, cam.cameraMatrix, cam.distCoeffs, rvecs[i], tvecs[i], 0.1);
+        }
+        
         // Process frame
         // Get a copy of the image for plot to draw on
         state.view() = imgout.clone();
