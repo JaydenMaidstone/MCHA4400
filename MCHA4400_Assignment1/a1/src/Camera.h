@@ -8,6 +8,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/persistence.hpp>
 #include "serialisation.hpp"
+#include <iostream>
 
 struct Pose
 {
@@ -94,8 +95,8 @@ struct Camera
     double vFOV = 0.0;                                      // Vertical field of view
     double dFOV = 0.0;                                      // Diagonal field of view
 
-    Eigen::Vector3d rCBb = Eigen::Vector3d::Zero();       // TODO: Assignment(s)
-    Eigen::Matrix3d Rbc = Eigen::Matrix3d::Identity();    // TODO: Assignment(s)
+    Eigen::Vector3d rCBb = Eigen::Vector3d::Zero();         // TODO: Assignment(s)
+    Eigen::Matrix3d Rbc = Eigen::Matrix3d::Identity();      // TODO: Assignment(s)
 };
 
 template <typename Scalar>
@@ -120,6 +121,7 @@ Eigen::Vector2<Scalar> Camera::worldToPixel(const Eigen::Vector3<Scalar> & rPNn,
 template <typename Scalar>
 Eigen::Vector2<Scalar> Camera::vectorToPixel(const Eigen::Vector3<Scalar> & rPCc) const
 {
+    
     bool isRationalModel    = (flags & cv::CALIB_RATIONAL_MODEL) == cv::CALIB_RATIONAL_MODEL;
     bool isThinPrismModel   = (flags & cv::CALIB_THIN_PRISM_MODEL) == cv::CALIB_THIN_PRISM_MODEL;
     assert(isRationalModel && isThinPrismModel);

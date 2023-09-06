@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <cmath>
+#include <vector>
 #include <Eigen/Core>
 #include <opencv2/core/mat.hpp>
 #include "Gaussian.hpp"
@@ -99,23 +100,23 @@ Eigen::Vector3d StateSLAM::cameraPosition(const Camera & cam, const Eigen::Vecto
     return rCNn_dual.cast<double>();
 };
 
-Eigen::Vector3d StateSLAM::cameraOrientation(const Camera & cam, const Eigen::VectorXd & x, Eigen::MatrixXd & J)
-{
-    Eigen::Vector3<autodiff::dual> Thetanc_dual;
-    Eigen::VectorX<autodiff::dual> x_dual = x.cast<autodiff::dual>();
-    J = jacobian(cameraOrientation<autodiff::dual>, wrt(x_dual), at(cam, x_dual), Thetanc_dual);
-    return Thetanc_dual.cast<double>();
-};
-
 Gaussian<double> StateSLAM::cameraPositionDensity(const Camera & cam) const
 {
-    auto f = [&](const Eigen::VectorXd & x, Eigen::MatrixXd & J) {return cameraPosition(cam, x, J); };
+    auto f = [&](const Eigen::VectorXd & x, Eigen::MatrixXd & J) { return cameraPosition(cam, x, J); };
     return density.transform(f);
 }
 
-Gaussian<double> StateSLAM::cameraOrientationDensity(const Camera & cam) const
+Eigen::Vector3d StateSLAM::cameraOrientationEuler(const Camera & cam, const Eigen::VectorXd & x, Eigen::MatrixXd & J)
 {
-    auto f = [&](const Eigen::VectorXd & x, Eigen::MatrixXd & J) {return cameraOrientation(cam, x, J); };
+    Eigen::Vector3<autodiff::dual> Thetanc_dual;
+    Eigen::VectorX<autodiff::dual> x_dual = x.cast<autodiff::dual>();
+    J = jacobian(cameraOrientationEuler<autodiff::dual>, wrt(x_dual), at(cam, x_dual), Thetanc_dual);
+    return Thetanc_dual.cast<double>();
+};
+
+Gaussian<double> StateSLAM::cameraOrientationEulerDensity(const Camera & cam) const
+{
+    auto f = [&](const Eigen::VectorXd & x, Eigen::MatrixXd & J) { return cameraOrientationEuler(cam, x, J); };
     return density.transform(f);    
 }
 
@@ -132,8 +133,7 @@ Gaussian<double> StateSLAM::landmarkPositionDensity(std::size_t idxLandmark) con
 // Image feature location for a given landmark and Jacobian
 Eigen::Vector2d StateSLAM::predictFeature(const Eigen::VectorXd & x, Eigen::MatrixXd & J, const Camera & cam, std::size_t idxLandmark) const
 {
-    // Set elements of J
-    // TODO: Lab 7 (optional)
+
     Eigen::Vector2<autodiff::dual> fvar;
     Eigen::VectorX<autodiff::dual> x_dual = x.cast<autodiff::dual>();
     
@@ -150,6 +150,7 @@ Eigen::Vector2d StateSLAM::predictFeature(const Eigen::VectorXd & x, Eigen::Matr
     return fvar.cast<double>();
 
     //std::cout << "J inside camera.h " << J << std::endl;
+
 
     //return predictFeature(x, cam, idxLandmark);
     // Note: If you use autodiff, return the evaluated function value (cast with double scalar type) instead of calling predictFeature as above
@@ -184,22 +185,33 @@ Eigen::VectorXd StateSLAM::predictFeatureBundle(const Eigen::VectorXd & x, Eigen
         Eigen::Vector2d rQOi = predictFeature(x, Jfeature, cam, idxLandmarks[i]);
         // Set pair of elements of h
         // TODO: Lab 8
+        //std::cout << rQOi << std::endl;
+        // h(2 * i) = rQOi(0);
+        // h(2 * i + 1) = rQOi(1);
+        //h(Eigen::seqN(2*i,2)) = rQOi;
+        h.segment(2*i,2) = rQOi;
         // Set pair of rows of J
         // TODO: Lab 8
+        // J(2 * i) = Jfeature(0);
+        // J(2 * i + 1) = Jfeature(1);
+        J.block(2*i,0,2, nx) = Jfeature;
+
+        
     }
+    
     return h;
 }
 
 // Density of image features for a set of landmarks
 Gaussian<double> StateSLAM::predictFeatureBundleDensity(const Camera & cam, const std::vector<std::size_t> & idxLandmarks) const
 {
-    auto func = [&] (const Eigen::VectorXd & x, Eigen::MatrixXd & J) { return predictFeatureBundle(x, J, cam, idxLandmarks); };
+    auto func = [&](const Eigen::VectorXd & x, Eigen::MatrixXd & J) { return predictFeatureBundle(x, J, cam, idxLandmarks); };
     return density.transform(func);
 }
 
 // Density of image features for a set of landmarks
 Gaussian<double> StateSLAM::predictFeatureBundleDensity(const Camera & cam, const std::vector<std::size_t> & idxLandmarks, const Gaussian<double> & noise) const
 {
-    auto func = [&] (const Eigen::VectorXd & x, Eigen::MatrixXd & J) { return predictFeatureBundle(x, J, cam, idxLandmarks); };
+    auto func = [&](const Eigen::VectorXd & x, Eigen::MatrixXd & J) { return predictFeatureBundle(x, J, cam, idxLandmarks); };
     return density.transform(func, noise);
 }
